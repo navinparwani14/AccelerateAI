@@ -93,7 +93,7 @@ st.markdown("""
 
 with st.sidebar:
     st.markdown("## AccelerateAI LLM")
-    st.write("This bot can answer questions related to clinical trials.")
+    st.write("AccelerateAI - Unleashing the Power of Deep Science meeting AI at Scale. We are Regulatory Strategists, Drug Innovators, Regulatory Scientists and Medical Communication leaders t the forefront of Rapidly Accelerating AI Landscape.")
     st.divider()
     st.subheader("Voice Settings")
     # voice_enabled = st.toggle("Enable Voice Response", key="voice_toggle")
