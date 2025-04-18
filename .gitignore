@@ -1,0 +1,6 @@
+.env
+clinical_trial
+rag.py.example
+sample_1000.csv
+sample_5000.csv
+cleaned_data.csv
