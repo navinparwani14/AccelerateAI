@@ -23,9 +23,9 @@ from streamlit_mic_recorder import speech_to_text
 warnings.filterwarnings('ignore')
 load_dotenv()
 
-os.environ['GROQ_API_KEY'] = os.getenv("GROQ_API_KEY")
-os.environ['GOOGLE_API_KEY'] = os.getenv("GEMINI_API_KEY")     
-os.environ['OPENAI_API_KEY'] = os.getenv("OPEN_API_KEY")
+# os.environ['GROQ_API_KEY'] = os.getenv("GROQ_API_KEY")
+# os.environ['GOOGLE_API_KEY'] = os.getenv("GEMINI_API_KEY")     
+os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API_KEY")
 
 voices = {
     "William":"en-AU-WilliamNeural",
@@ -86,13 +86,13 @@ def create_vectorstore():
 # Title
 st.markdown("""
     <h1 style='text-align: center;'>
-        AccelerateAI
+        AccelerateAI Clinical & Regulatory Intelligence 
     </h1>
 """, unsafe_allow_html=True)
 
 
 with st.sidebar:
-    st.markdown("## Clinical Trials ChatBot")
+    st.markdown("## AccelerateAI LLM")
     st.write("This bot can answer questions related to clinical trials.")
     st.divider()
     st.subheader("Voice Settings")
@@ -174,7 +174,7 @@ def reset_conversation():
 
 def rag_qa_chain(question, retriever, chat_history):
     # llm = ChatGroq(model="llama-3.1-8b-instant")
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=os.getenv("OPENAI_API_KEY"))
     output_parser = StrOutputParser()
 
     # System prompt to contextualize the question
@@ -218,7 +218,7 @@ def rag_qa_chain(question, retriever, chat_history):
     )
 
     # final_llm = ChatGoogleGenerativeAI(model='gemini-1.5-flash', temperature=0.5)
-    final_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
+    final_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5, api_key=os.getenv("OPENAI_API_KEY"))
     rag_chain = (
         RunnablePassthrough.assign(
             context=contextualize_q_chain | retriever | format_docs
@@ -292,7 +292,7 @@ if text or query:
 
     # Generate response
     with col2.chat_message("assistant", avatar="assets/assistant.png"):
-        # try:
+        try:
             response = st.write_stream(rag_qa_chain(question=user_query,
                             retriever=st.session_state["vectorstore"].as_retriever(search_kwargs={"k": 6}),
                             chat_history=st.session_state.chat_history))
@@ -305,5 +305,5 @@ if text or query:
             #     response_voice = st.session_state.voice_response
             #     generate_voice(response, voices[response_voice])
                 
-        # except Exception as e:
-        #     st.error(f"An internal error occurred. Please check your internet connection")
+        except Exception as e:
+            st.error(f"An internal error occurred. Please check your internet connection")
