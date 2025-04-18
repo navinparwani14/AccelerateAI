@@ -92,8 +92,9 @@ st.markdown("""
 
 
 with st.sidebar:
+    st.image("image.jpg", width=500)
     st.markdown("## AccelerateAI LLM")
-    st.write("AccelerateAI - Unleashing the Power of Deep Science meeting AI at Scale. We are Regulatory Strategists, Drug Innovators, Regulatory Scientists and Medical Communication leaders at the forefront of Rapidly Accelerating AI Landscape.")
+    st.write("This bot can answer questions related to clinical trials.")
     st.divider()
     st.subheader("Voice Settings")
     # voice_enabled = st.toggle("Enable Voice Response", key="voice_toggle")
@@ -122,6 +123,8 @@ categorized_queries = {
         "What is the FDA approval process after clinical trials?"
     ]
 }
+
+
 
 # Select category
 selected_category = st.sidebar.selectbox("Select Category", list(categorized_queries.keys()))
