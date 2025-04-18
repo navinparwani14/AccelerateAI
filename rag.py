@@ -86,7 +86,7 @@ def create_vectorstore():
 # Title
 st.markdown("""
     <h1 style='text-align: center;'>
-        Clinical Trials Assistant
+        AccelerateAI
     </h1>
 """, unsafe_allow_html=True)
 
