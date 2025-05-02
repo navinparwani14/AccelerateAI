@@ -16,6 +16,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os, base64
+from langchain_openai import OpenAIEmbeddings
 import asyncio
 import edge_tts
 from streamlit_mic_recorder import speech_to_text
@@ -63,21 +64,20 @@ st.markdown("""
 def create_vectorstore():
     """Create and save the vector store if it doesn't exist"""
     try:
-        # Check if we can load the existing vector store
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        # Use OpenAI Embeddings
+        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"),  model="text-embedding-3-large")
         vectorstore = FAISS.load_local("FAISS", embeddings, allow_dangerous_deserialization=True)
         st.success("Vector store loaded successfully.")
         return vectorstore
     except Exception as e:
-        # If the vector store doesn't exist or there's an error loading it, create a new one
         st.warning("Vector store not found or could not be loaded. Creating a new one...")
         with st.spinner("Creating vector store. This might take a moment..."):
             loader = CSVLoader("sampled_5000.csv")
             docs = loader.load()
             splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=250)
             chunks = splitter.split_documents(docs)
-            
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+            embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
             vectorstore = FAISS.from_documents(chunks, embeddings)
             vectorstore.save_local("FAISS")
             st.success("Vector store created and saved successfully.")
