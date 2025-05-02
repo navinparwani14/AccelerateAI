@@ -295,7 +295,7 @@ if text or query:
 
     # Generate response
     with col2.chat_message("assistant", avatar="assets/assistant.png"):
-        try:
+        #try:
             response = st.write_stream(rag_qa_chain(question=user_query,
                             retriever=st.session_state["vectorstore"].as_retriever(search_kwargs={"k": 6}),
                             chat_history=st.session_state.chat_history))
@@ -308,5 +308,5 @@ if text or query:
             #     response_voice = st.session_state.voice_response
             #     generate_voice(response, voices[response_voice])
                 
-        except Exception as e:
-            st.error(f"An internal error occurred. Please check your internet connection")
+        #except Exception as e:
+         #   st.error(f"An internal error occurred. Please check your internet connection")
