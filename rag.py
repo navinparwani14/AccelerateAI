@@ -1,22 +1,19 @@
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain_openai.embeddings import OpenAIEmbeddings
 import tempfile
 import warnings
 import streamlit as st
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_groq import ChatGroq
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.runnables import RunnablePassthrough
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os, base64
-from langchain_openai import OpenAIEmbeddings
 import asyncio
 import edge_tts
 from streamlit_mic_recorder import speech_to_text
@@ -24,8 +21,6 @@ from streamlit_mic_recorder import speech_to_text
 warnings.filterwarnings('ignore')
 load_dotenv()
 
-# os.environ['GROQ_API_KEY'] = os.getenv("GROQ_API_KEY")
-# os.environ['GOOGLE_API_KEY'] = os.getenv("GEMINI_API_KEY")     
 os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API_KEY")
 
 voices = {
@@ -64,20 +59,21 @@ st.markdown("""
 def create_vectorstore():
     """Create and save the vector store if it doesn't exist"""
     try:
-        # Use OpenAI Embeddings
-        embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"),  model="text-embedding-3-large")
+        # Check if we can load the existing vector store
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
         vectorstore = FAISS.load_local("FAISS", embeddings, allow_dangerous_deserialization=True)
         st.success("Vector store loaded successfully.")
         return vectorstore
     except Exception as e:
+        # If the vector store doesn't exist or there's an error loading it, create a new one
         st.warning("Vector store not found or could not be loaded. Creating a new one...")
         with st.spinner("Creating vector store. This might take a moment..."):
-            loader = CSVLoader("sampled_5000.csv")
+            loader = CSVLoader("CT Gov Cardio.csv")
             docs = loader.load()
             splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=250)
             chunks = splitter.split_documents(docs)
-
-            embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
+            
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
             vectorstore = FAISS.from_documents(chunks, embeddings)
             vectorstore.save_local("FAISS")
             st.success("Vector store created and saved successfully.")
@@ -176,8 +172,8 @@ def reset_conversation():
 
 
 def rag_qa_chain(question, retriever, chat_history):
-    # llm = ChatGroq(model="llama-3.1-8b-instant")
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=os.getenv("OPENAI_API_KEY"))
+    # Use OpenAI for the first LLM (context handling)
+    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
     output_parser = StrOutputParser()
 
     # System prompt to contextualize the question
@@ -206,7 +202,7 @@ def rag_qa_chain(question, retriever, chat_history):
             - Maintain a professional, authoritative tone while ensuring your answers are easy to read and understand.
             - Use technical language appropriately (e.g., NCT numbers, endpoints, phases, randomization methods), but always prioritize clarity and usability.
             - Organize complex answers with clear structure: bullet points, numbered lists, or short paragraphs when needed.
-            - If unsure of the user’s intent, give useful general guidance and ask a precise follow-up question to clarify.
+            - If unsure of the user's intent, give useful general guidance and ask a precise follow-up question to clarify.
             -   If you don't get the correct answer from vector database try to answer from your own knowledge.
 
             {context}
@@ -220,8 +216,8 @@ def rag_qa_chain(question, retriever, chat_history):
         ]
     )
 
-    # final_llm = ChatGoogleGenerativeAI(model='gemini-1.5-flash', temperature=0.5)
-    final_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5, api_key=os.getenv("OPENAI_API_KEY"))
+    # Use OpenAI for the final LLM (response generation)
+    final_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
     rag_chain = (
         RunnablePassthrough.assign(
             context=contextualize_q_chain | retriever | format_docs
@@ -295,7 +291,7 @@ if text or query:
 
     # Generate response
     with col2.chat_message("assistant", avatar="assets/assistant.png"):
-        #try:
+        try:
             response = st.write_stream(rag_qa_chain(question=user_query,
                             retriever=st.session_state["vectorstore"].as_retriever(search_kwargs={"k": 6}),
                             chat_history=st.session_state.chat_history))
@@ -308,5 +304,5 @@ if text or query:
             #     response_voice = st.session_state.voice_response
             #     generate_voice(response, voices[response_voice])
                 
-        #except Exception as e:
-         #   st.error(f"An internal error occurred. Please check your internet connection")
+        except Exception as e:
+            st.error(f"An internal error occurred. Please check your internet connection")
