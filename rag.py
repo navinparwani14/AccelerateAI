@@ -18,6 +18,8 @@ import asyncio
 import edge_tts
 from streamlit_mic_recorder import speech_to_text
 
+
+
 warnings.filterwarnings('ignore')
 load_dotenv()
 
@@ -68,7 +70,7 @@ def create_vectorstore():
         # If the vector store doesn't exist or there's an error loading it, create a new one
         st.warning("Vector store not found or could not be loaded. Creating a new one...")
         with st.spinner("Creating vector store. This might take a moment..."):
-            loader = CSVLoader("CT Gov Cardio.csv")
+            loader = CSVLoader("sampled_5000.csv")
             docs = loader.load()
             splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=250)
             chunks = splitter.split_documents(docs)
